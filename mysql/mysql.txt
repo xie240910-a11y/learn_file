@@ -1,0 +1,16 @@
+索引：
+索引引擎：Innodb（行锁默认）支持rcid，MyiSAM（表锁）不支持，Memory（内存存储）
+索引分类：B-Tree，Hash，R-Tree，Full-text
+Innodb(B-Tree)：聚集索引（必须有，且唯一，主键存在则设主键为聚集索引，主键不存在则设第一个唯一索引为聚集索引，否则默认分配一个rowid），二级索引（数据索引分开，查询到聚集索引的id再二次查找）
+查看SQL的所有操作执行频率：SHOW GLOBAL STATUS LIKE 'Com_______';
+查询慢查询日志：
+    show variables like 'slow_query_log';
+    注意：需要开启配置，/etc/my.conf添加如下信息：slow_query_log = 1 long_query_time = 2（表示消耗时间大于2s记录）
+profiling:
+    查看是否支持profiling: SELECT @@have_profiling
+        查看是否开启：SELECT @@profiling
+        默认关闭，需要开启：SET profiling = 1;
+    查看所有操作耗时情况：show profiling  
+    查看具体操作的耗时位置：show progiling for query + id(通过上面操作查询的id)
+    查看cpu耗时情况：show progiling cpu for query + id
+explain/desc关键字 + SQL语句：查看操作的执行步骤，根据id大小，id越大优先级越高，id相同，优先级从上到下
