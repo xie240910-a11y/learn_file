@@ -1,0 +1,119 @@
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS demo_db CHARACTER SET utf8mb4;
+
+-- 使用数据库
+USE demo_db;
+
+-- 创建表
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,     -- 主键，自增
+    name VARCHAR(50) NOT NULL,             -- 用户名
+    age INT,                               -- 年龄
+    email VARCHAR(100),                    -- 邮箱
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 创建时间
+);
+-- 创建表定义索引
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    email VARCHAR(100) UNIQUE,          -- 唯一约束（等同于唯一索引）
+    age INT,
+    INDEX idx_age (age),                -- 普通索引
+    INDEX idx_name_age (name, age)      -- 联合索引
+);
+
+
+-- 插入单条记录
+INSERT INTO users (name, age, email) VALUES ('Alice', 25, 'alice@example.com');
+
+-- 插入多条记录
+INSERT INTO users (name, age, email) VALUES 
+('Bob', 30, 'bob@example.com'),
+('Charlie', 22, 'charlie@example.com');
+
+-- 查询所有列
+SELECT * FROM users;
+
+-- 查询部分列
+SELECT name, email FROM users;
+
+-- 条件查询
+SELECT * FROM users WHERE age > 25;
+
+-- 模糊查询（LIKE）
+SELECT * FROM users WHERE name LIKE 'A%';   -- 以A开头
+
+-- 排序
+SELECT * FROM users ORDER BY age DESC;
+
+-- 分页（limit offset）
+SELECT * FROM users ORDER BY id LIMIT 10 OFFSET 20;
+
+-- 修改指定用户的邮箱
+UPDATE users SET email = 'new@example.com' WHERE id = 1;
+
+-- 同时修改多列
+UPDATE users SET name='Alice Zhang', age=26 WHERE id=1;
+
+-- 批量修改
+UPDATE users SET age = age + 1 WHERE age < 30;\
+
+-- 删除特定记录
+DELETE FROM users WHERE id = 3;
+
+-- 删除所有记录（慎用）
+DELETE FROM users;
+
+-- 删除表内容但保留表结构
+TRUNCATE TABLE users;
+
+-- 索引操作
+SHOW INDEX FROM users;
+
+CREATE INDEX idx_age ON users(age);
+
+CREATE UNIQUE INDEX idx_email ON users(email);
+
+CREATE INDEX idx_name_age ON users(name, age);
+
+CREATE FULLTEXT INDEX idx_name ON users(name);
+
+DROP INDEX idx_age ON users;
+
+-- 修改表结构
+-- 添加列
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+
+-- 修改列类型
+ALTER TABLE users MODIFY age SMALLINT;
+
+-- 删除列
+ALTER TABLE users DROP COLUMN phone;
+
+-- 删除库表
+DROP TABLE users;
+DROP DATABASE demo_db;
+
+-- CASE SELECT:
+    SELECT name,
+        CASE WHEN score >= 90 THEN '优秀'
+                WHEN score >= 60 THEN '及格'
+                ELSE '不及格'
+        END AS 结果
+    FROM student;
+
+-- ORDER BY
+    SELECT * FROM student
+        ORDER BY
+            CASE
+                WHEN score >= 90 THEN 1
+                WHEN score >= 60 THEN 2
+                ELSE 3
+            END;
+-- UPDATE
+    UPDATE users
+        SET level = CASE
+                        WHEN points > 1000 THEN 'VIP'
+                        WHEN points > 500 THEN '普通'
+                        ELSE '新用户'
+                    END;

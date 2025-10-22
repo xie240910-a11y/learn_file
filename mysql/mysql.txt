@@ -2,6 +2,7 @@
 索引引擎：Innodb（行锁默认）支持rcid，MyiSAM（表锁）不支持，Memory（内存存储）
 索引分类：B-Tree，Hash，R-Tree，Full-text
 Innodb(B-Tree)：聚集索引（必须有，且唯一，主键存在则设主键为聚集索引，主键不存在则设第一个唯一索引为聚集索引，否则默认分配一个rowid），二级索引（数据索引分开，查询到聚集索引的id再二次查找）
+
 查看SQL的所有操作执行频率：SHOW GLOBAL STATUS LIKE 'Com_______';
 查询慢查询日志：
     show variables like 'slow_query_log';
@@ -14,3 +15,91 @@ profiling:
     查看具体操作的耗时位置：show progiling for query + id(通过上面操作查询的id)
     查看cpu耗时情况：show progiling cpu for query + id
 explain/desc关键字 + SQL语句：查看操作的执行步骤，根据id大小，id越大优先级越高，id相同，优先级从上到下
+
+索引查询注意事项：
+    最左前缀法则：当出现联合索引的时候，查询sql时最左边的索引必须存在，否则索引失效，当中间部分索引不存在时，依旧会走索引，但是用到部分索引
+    如果select查询过程出现or，则两端都必须用索引，否则索引失效
+    当select查询时，如果mysql评估使用索引比全表查询更慢，则不用索引，即表中绝大部分数据都满足查询条件，还不如全表查询
+
+sql提示：sql提示是优化数据库的重要手段，在sql语句中加入人为的提示来达到优化操作的目的
+    use index：使用索引（只是建议，mysql会评估）
+    ignore index：不用索引（忽略索引）
+    force index：强制索引（强制使用）
+
+覆盖索引：查询使用了索引，并且返回需要的列，在该索引中已经全部能够找到，减少selec *
+    使用explain查询数据，最后一列extra出现：
+        using index condition：查询使用了索引，但是需要回表查询数据
+        using where; using index；查询使用了索引，但是需要的数据都能在索引列中查找到，所以不需要回表查询数据
+
+前缀索引：当索引字段是string 或者 text时，字符串比较长，如果直接创建索引导致占用磁盘比较大，可以指定字符串前几个作为索引
+    create index idx_xxx on table_name(column(n));
+
+distinct: 不重复的值；select count(distinct email) FROM table_name;
+
+索引设计原则：
+    1、针对数据量较大（百万级别），查询比较频繁的表建立索引
+    2、针对常做查询条件（where），排序（order by）， 分组（group by） 操作的字段建立索引
+    3、尽量选择区分度较高的列作为索引，尽量建立唯一索引，区分度越高，使用索引效率越高
+    4、如果是字符串类型的字段，字段长度较长，可以针对于字段的特点建立前缀索引
+    5、尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率
+    6、控制索引数量， 
+    7、如果索引不能存储NULL值，创表建立not null约束。
+
+插入insert优化：
+    1、批量插入代替单条插入，建议1000条
+    2、手动提交事务（自动提交事务带来频繁的打开提交事务，浪费资源）
+    u3、主键顺序插入(针对load指令)
+        如果涉及大批量插入数据，建议使用load加载磁盘数据插入：
+            客户端连接服务端时，加上参数 --local-infile: mysql --local-infile -u root -p
+            查看local_infile服务是否开启：select @@local_infile;
+            设置全局参数local_infile 为1，开启本地加载文件导入数据的开关: set global local_infile = 1；
+            执行load指令将准备好的数据，加载到表结构
+            local data local infile '/root/sql1.log' into table `tb_user` fields terminated by ',' lines terminated by '\n';
+
+主键优化：
+    插入数据会带来页分裂跟合并现象；
+    页分裂：1，3，4，5，  9，11，23，24， 插入主键id为7时，分新增页，将4，5，跟7分配到一个页上，然后重新链接，1，3，  4，5，7  9，11，23，24，
+    页合并：当删除主键id时并不会真的删除该数据，会打上删除标记，可以被利用，当删除个数达到百分之50（默认，可修改）时，后面页会跟前面合并；
+    主键设计原则：
+        满足业务需求的情况下，尽量降低主键长度；
+        插入数据尽量选择顺序插入，使用auto_increment自增主键；
+        尽量不要使用uuid（无序的）做主键或者其他自然主键，如身份证号；
+        业务操作避免主键修改
+
+order by优化：
+    1、根据排序字段建立合适的索引，多字段排序时，也遵循最左前缀法则
+    2、尽量使用覆盖索引
+    3、多字段排序，一个升序一个降序，此时要注意联合索引在创建时的规则（ASC/DESC）
+    4、如果不可避免出现firesort，大数据量排序时，可以适当增大缓冲区大小sort_buffer_size(默认256k)
+    注意：
+        当order by后面的字段是索引字段时，使用using index，如果是普通字段，则是using filesort
+        使用explain关键字查看select sql时，最后一列extra出现状态：
+            using filesort：通过表的索引或者全表扫描，读取满足条件的数据行，然后在排序缓冲区sort buffer中完成排序操作，所有不是通过索引直接返回排序结果的排序都叫Filesort排序
+            using index：通过有序索引排序扫描返回有序数据，这种情况即为using index 不需要额外排序，操作效率高
+            backward index：反向扫描索引
+            注意：依旧需要遵循最左前缀原则；索引创建都是默认升序排序，当查询联合索引，查询一个升序一个降序，依旧会出现using filesort
+
+group by优化：
+    1、分组操作可以通过索引提高效率
+    2、分组操作，索引使用满足最左前缀原则；特殊情况：当sql出现where后跟条件时，是满足最左前缀情况下，group by 可以不满足最左前缀
+    注意：当group by后面的字段是索引字段时，使用using index，如果是普通字段，则是using temporary；
+
+limit 优化：
+    一般分页查询时，通过创建 覆盖索引能够比较好的提高性能，通过覆盖索引 + 子查询形式进行优化：
+        explain select * from table t, (select id from table order by id limit 2000000,10) a where t.id = a.id;
+    注意：limit 2000000 10 此时mysql需要排序2000010记录，仅仅返回2000000 2000010的记录，其他的丢弃，查询排序代价非常大
+
+count 优化：
+    1、count（主键）：InnoDB引擎会遍历整张表，把每一行的主键id值都取出来，返回给服务层。服务层拿到主键后直接按行进行累加（主键不可能为null）
+    2、count（字段）：
+        没有not null约束：InnoDB引擎会遍历整张表把每一行的字段值取出来，返回给服务层，服务层判断是否为null，不为null计数累加
+        有not null  约束：InnoDB引擎会遍历整张表把每一行的字段值取出来，返回给服务层直接进行累加
+    3、count（1）：InnoDB引擎会遍历整张表，服务层对于返回的每一行都放个数字1进去，直接进行累加
+    4、count（*）：InnoDB引擎并不会把全部字段取出，而是专门做了优化，不取值直接进行累加
+    count(*) ≈ count（1） > count（主键） > count（字段）,尽量使用count（*）
+
+update：
+    使用 begin;开启锁时，如果update 后面跟的条件语句是主键或者索引，使用的是行锁，如果是普通字段，则是表锁；尽量使用索引作为条件 语句
+    InnoDB的行锁是针对索引加的锁，而不是针对记录加的锁，并且该索引不能失效，否则会从行锁升级为表锁；
+    InnoDB三大特性：事务，外键，行级锁
+    begin: 开启行锁；

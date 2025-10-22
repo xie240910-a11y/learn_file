@@ -1,0 +1,32 @@
+# 创建视图：create or replace view stu_v_1 as select id, name from student where id <= 10;
+# 查询视图：
+    查看创建视图语句：show create view 视图名称
+    查看视图数据：select * from 视图名称；
+#修改视图：
+    1、主要是or replace：create or replace view stu_v_1 as select id, name from student where id <= 10;
+    2、alter view 视图名称 as select id, name from student where id <= 10;
+#删除视图：drop view（if exists）视图名称
+
+视图：虚拟存在的表，不实际保存数据
+如果insert into view_table values(); 结果会插入到基表中去
+
+# 视图检查选项：
+    with cascaded（默认） check option：会检查条件语句，向下检查，如果嵌套视图搜索时，向下搜索检查
+        创建视图加上选项(with cascaded check option): create or replace view stu_v_1 as select id, name from student where id <= 10 with cascaded check option;
+    with local check option：不会向下检查，只会检查当前定义的视图条件语句
+
+#视图的更新
+    要使视图更新，视图中的行与基础表中的行之间必须存在一对一的关系，如果视图中包含一下任何一项，则视图不可以更新
+        1、聚合函数或者窗口函数（SUM(), MIN(), MAX(), COUNT()）
+        2、DISTINCT
+        3、GROUP BY
+        4、HAVING
+        5、UNION或者UNION ALL
+
+#视图的作用
+    1、简单
+        视图可以简化用户对数据的理解，也可以简化他们的操作。经常被使用的查询可以被定义为视图，从而使用户不必为以后的操作每次指定全部的条件
+    2、安全
+        数据库可以授权，但不能授权到数据库特定的行和列上，通过视图用户只能查询和修改他们所能见到的数据
+    3、数据的独立
+        视图可以帮助用户屏蔽真实的表结构变化带来的影响
