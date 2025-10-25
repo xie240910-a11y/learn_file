@@ -1,0 +1,31 @@
+逻辑存储结构：
+    表空间（ibd文件）：一个mysql实例可以对应多个表空间，用于存储记录，索引等数据
+    段：分为数据段，索引段，回滚段，InnoDB是索引组织段，数据段就是B+数的叶子节点，索引段即为B+数的非叶子节点，段用来管理多个Extent（区）
+    区：表空间的单元结构，每个区大小为1M。默认情况下，InnoDB存储引擎页的大小为16K，即一个区有64个连续的页
+    页：是InnoDB存储引擎磁盘管理的最小单元，每个页的大小默认16KB。为了保证页的连续性，InnoDB存储引擎每次从磁盘申请4-5个区
+    行：InnoDB存储引擎数据是按行进行存放
+        两个隐藏属性：
+            Trx_id：每次对某条记录进行改动时，都会把对应的事务id赋值给trx_id隐藏列
+            Roll_pointer:每次对某条引记录进行改动时，都会把旧的版本写入到undo日志中，然后这个隐藏列就相当于一个指针，
+            可以通过它来找到该记录修改前的信息
+MYSQL5.5版本开始，默认使用InnoDB存储引擎，它擅长事务处理，具备崩溃恢复特性
+    Buffer Pool：缓冲池是主内存的一个区域，里面存放磁盘上经常操作的真实数据，在执行增删改查操作时，先操作缓冲池中的数据，若缓冲池中没数据，则从磁盘加载缓存，然后再以一定频率刷新到磁盘上，减少磁盘IO，加快处理速度
+    缓冲池以页为单位，底层采用链表数据结构管理Page。根据状态，将Page分为三种类型
+    free page：空闲page，未被使用
+    clean page：被使用的page 数据没有被修改
+    dirty page：脏页，被使用page，数据被修改，页中数据与磁盘数据产生了不一致
+
+log buffer：日志缓冲区，用来保存要写入到磁盘中的log日志数据，默认大小16MB，日志缓冲区的日志会定期刷新到磁盘中。
+如果需要更新，插入或者删除许多行的事务，增加日志缓冲区的大小可以减少磁盘io
+    innodb_log_buffer_size:缓冲区大小
+    innodb_flush_log_at_trx_commit:日志刷新到磁盘的时机
+
+System Tablespace: 系统表空间是更改缓冲区的存储区域。如果表是再系统表空间而不是每个表文件或者通用表空间中创建的，它页可能包含表和索引数据。
+    参数：innodb_data_file_path
+
+File-PerTable Tablespace：每个表的文件表空间包含单个InnoDB表的数据和索引，并存储再文件系统上的单个数据文件中
+    参数：innodb_file_per_table
+
+General Tablespace: 通用表空间，需要通过 CREATE  TABLESPACE 语法创建通用表空间，再创建表空间时，可以指定该表空间。
+    CREATE TABLESPACE xxx ADD DATAFILE 'file_name' ENGINE=engine_name;
+
