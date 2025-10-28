@@ -1,4 +1,5 @@
-MySQL配置文件路径：cat /etc/mysql/mysql.conf.d/mysqld.cnf
+MySQL配置文件路径：
+    /etc/mysql/mysql.conf.d/mysqld.cnf
 
 查看错误日志文件：show  variables like '%log_error%';
     查看log_error文件就行
@@ -61,3 +62,134 @@ MySQL配置文件路径：cat /etc/mysql/mysql.conf.d/mysqld.cnf
         主库出现问题，可以快速切换到从库提供服务
         实现读写分离，降低主库的访问压力
         可以在从库中执行备份，以避免备份期间影响主库服务
+
+    主从配置：
+        192.168.200.200（master）
+        192.168.200.201（slave）
+        开放端口两种方式：
+            1、开放指定3306端口
+            firewall-cmd-zone=public --add-port=3306/tcp -permanent
+            firewall-cmd -reload
+            
+            ubuntu:
+            sudo ufw allow 3306
+            sudo ufw reload
+            2、关闭防火墙
+            systemctl stop firewalld
+            systemctl disable firewalld
+            ubuntu:
+            sudo ufw disable
+            
+    
+    #主库配置：修改配置文件 /etc/mysql/mysql.conf.d/mysqld.cnf
+        1、#mysql服务ID，保证整个集群环境中唯一，取值范围：1-2*32次方-1，默认1
+        server-id = 1
+        #是否只读，1代表只读，0代表读写（这个只读是只针对普通用户，超级管理员依旧可以读写，如果要设置超级管理员也只读，需要设置：super-read-only=1）
+        read-only=1
+        #忽略的数据，指不需要同步的数据库
+        #binlog-ignore-db=mysql
+        #指定同步数据库
+        #binlog-do-db=db01
+        
+        2、重启mysql服务：systemctl restart mysql
+
+        3、登录mysql，创建远程连接账号，并授予主从复制权限
+        # 创建itcast用户，并设置密码，该用户可在任意主机连接MySQL服务
+        CREATE USER 'itcast'@'%'IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+        # 为'itcast'@'%'用户分配主从复制权限
+        GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+
+        4、通过指令，查看二进制日志坐标
+        show master status;
+        字段含义说明：
+            file：从哪个日志文件开始推送日志信息
+            position：从哪个位置开始推送日志信息
+            binlog_ignore_db: 指定不需要同步的数据库
+
+    # 从库设置
+        1、修改配置文件 /etc/mysql/mysql.conf.d/mysqld.cnf
+            server-id = 2
+            read-only=1
+        
+        2、重启mysql服务：systemctl restart mysql
+
+        3、从库配置
+            登陆mysql，设置主库配置
+            CHANGE REPLICATION SOURCE TO
+                SOURCE_HOST='192.168.137.128',
+                SOURCE_USER='itcast',
+                SOURCE_PASSWORD='Root@123456',
+                SOURCE_PORT=3306,
+                SOURCE_LOG_FILE='binlog.000021',
+                SOURCE_LOG_POS=831;
+            上述是8.0.23的语法，如果是之前版本的：
+            CHANGE MASTER TO MASTER_HOST='192.168.137.128',MASTER_USER='itcast',MASTER_PASSWORD='Root@123456',MASTER_LOG_FILE='binlog.000021',MASTER_LOG_POS=664;
+
+            参数信息：
+                SOURCE_HOST（MASTER_HOST）          主库IP地址
+                SOURCE_USER（MASTER_USER）          连接主库的用户名
+                SOURCE_PASSWORD（MASTER_PASSWORD）  连接主库的密码
+                SOURCE_LOG_FILE（MASTER_LOG_FILE）  binlog日志文件名
+                SOURCE_LOG_POS（MASTER_LOG_POS）    binlog日志文件位置
+    
+        4、开启同步操作
+            start replica; # 8.0.22之后
+            start slave;   # 8.0.22之前
+
+        5、查看主从同步状态
+            show replica status\G; # 8.0.22之后
+            show slave status\G;   # 8.0.22之前
+        
+        6、如果需要删除主从连接状态
+            STOP REPLICA;      
+            RESET REPLICA ALL;
+            START REPLICA;
+            SHOW REPLICA STATUS\G;
+
+        配置好后查看主从同步状况看参数，下面两个参数为yes则表示成功：
+            Replica_IO_Running: No
+            Replica_SQL_Running: No
+        注意事项：
+            1、确保主节点服务器防火墙3306端口打开
+            2、确保mysql配置允许外服务器连接
+                sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf
+                bind-address = 0.0.0.0 # 0.0.0.0 表示监听所有网络接口（包括局域网 IP）。
+            3、重启服务：sudo systemctl restart mysql
+            4、查看端口连接状态：sudo netstat -tulnp | grep 3306
+
+'\G'关键字：列数据转换行数据展示
+
+# 分库分表
+    随互联网以及移动互联网的发展，应用系统的数据量也是成指数式增长，若采用但数据库进行数据存储，存在一下瓶颈：
+        1、IO瓶颈：热点数据太多，数据库缓存不足，产生大量磁盘IO，效率降低，请求数据太多，带宽不够，网路IO瓶颈
+        2、CPU瓶颈:排序、分组、连接查询、聚合统计等SQL会耗费大量CPU资源，请求数太多，CPU出现瓶颈
+
+        分库分表的中心思想都是将数据分散存储，使得单一数据库/表的数据量变小来缓解单一数据库的性能问题，从而达到提升数据库性能的目的
+
+    拆分策略：
+        垂直拆分
+            垂直分库：以表为依据，根据业务将不同表拆分到不同库当中
+                每个库的表结构不一样
+                每个库的数据不一样
+                所有库的并集是全量数据
+            垂直分表：以字段为依据，根据id做关联，将字段属性不同拆分到不同表结构当中
+                每个表的表结构不一样
+                每个表的数据不一样，一般通过主键/外键关联
+                所有表的并集是全量数据
+                
+        水平拆分
+            水平分库：以字段为依据，按照一定策略，将一个库的数据拆分到多个库中
+                每个库的表结构都一样
+                每个库的数据都不一样
+                所有库的并集是全量数据
+            水平分表：以字段为依据，按照一定策略，将一个表的数据拆分到多个库的相同表中
+                每个表的表结构都一样
+                每个表的数据都不一样
+                所有表的并集是全量数据
+
+    工具：
+        shardingJDBC：基于AOP原理，在应用程序中对本地执行的SQL进行拦截，解析、改写、路由处理。需要自行编码配置实现，只支持java语言，性能较高
+        Mycat：数据库分库分表中间件，不用调整代码即可实现分库分表，支持多种语言，性能不及前者
+
+    Mycat概述：Mycat是阿里开源，活跃、基于Java语言编写的MySQL数据库中间件。可以像mysql一样使用mycat，对于开发人员来说根本感觉不到mycat存在
+    

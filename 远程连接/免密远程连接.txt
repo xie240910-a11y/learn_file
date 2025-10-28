@@ -1,0 +1,45 @@
+安装openssh-server
+
+
+1. 生成 SSH 密钥对
+如果你还没有 SSH 密钥对，可以按照以下步骤在 MobaXterm 中生成：
+
+打开 MobaXterm，点击左侧的 Tools 菜单，然后选择 MobaKeyGen。
+
+在 MobaKeyGen 中，点击 Generate 按钮生成 SSH 密钥对。
+
+将鼠标移动到密钥生成框内，直到密钥对被生成。
+
+在 Public key for pasting into OpenSSH authorized_keys file 下面的文本框中，复制公钥（后续需要将公钥添加到远程服务器的 ~/.ssh/authorized_keys 文件中）。
+
+点击 Save private key 保存私钥，最好保存为 id_rsa 格式。
+
+2. 将公钥上传到远程服务器
+通过其他方式（比如密码登录）连接到远程服务器。
+
+在远程服务器上，创建 .ssh 目录（如果尚未存在）：
+
+bash
+复制
+编辑
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+在 .ssh 目录下创建 authorized_keys 文件，并将之前在 MobaKeyGen 中复制的公钥粘贴进去：
+
+bash
+复制
+编辑
+echo "your-public-key" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+（将 "your-public-key" 替换为你在 MobaKeyGen 中复制的公钥内容。）
+
+3. 在 MobaXterm 中配置私钥
+打开 MobaXterm，选择 Session。
+
+在弹出的窗口中，选择 SSH。
+
+输入远程主机的 IP 地址或域名，用户名等信息。
+
+在 Advanced SSH settings 中，勾选 Use private key，然后选择刚刚保存的私钥文件（id_rsa）。
+
+点击 OK，然后连接。

@@ -1,0 +1,57 @@
+你可以通过检查远程服务器上的 sshd_config 配置文件来确保公钥认证是启用的。以下是如何检查和确认该配置的步骤：
+
+1. 登录到远程服务器
+使用你当前的登录方式（如密码登录）连接到远程服务器。
+
+2. 编辑 sshd_config 文件
+sshd_config 文件通常位于 /etc/ssh/sshd_config 路径。使用文本编辑器打开该文件，例如：
+
+bash
+复制
+编辑
+sudo nano /etc/ssh/sshd_config
+或者，如果你使用的是 vi：
+
+bash
+复制
+编辑
+sudo vim /etc/ssh/sshd_config
+3. 查找并修改相关配置
+在文件中查找以下几行，并确保它们没有被注释（去掉行首的 #）并且设置为 yes：
+
+PubkeyAuthentication yes
+
+AuthorizedKeysFile .ssh/authorized_keys
+
+如果这两项配置没有正确设置，可以手动修改或添加：
+
+bash
+复制
+编辑
+PubkeyAuthentication yes
+AuthorizedKeysFile     .ssh/authorized_keys
+4. 确认其他相关设置
+确保 PasswordAuthentication 配置为 no，以便禁用密码登录（这不是强制的，但有助于提高安全性）：
+
+bash
+复制
+编辑
+PasswordAuthentication no
+5. 保存并退出编辑器
+在 nano 中，按 Ctrl + X，然后按 Y 保存修改并退出。
+
+在 vi 中，按 Esc，输入 :wq 然后按 Enter 保存并退出。
+
+6. 重启 SSH 服务
+为了使配置生效，需要重启 SSH 服务。使用以下命令重启 SSH 服务：
+
+bash
+复制
+编辑
+sudo systemctl restart sshd
+或者在某些系统中：
+
+bash
+复制
+编辑
+sudo service ssh restart
