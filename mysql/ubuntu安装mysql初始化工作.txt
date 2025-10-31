@@ -1,0 +1,22 @@
+#设置密码
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
+FLUSH PRIVILEGES;
+如果无法设置，可以降低密码复杂度：
+    -- 或者降低要求（不想卸载插件的情况）
+    SET GLOBAL validate_password.policy=LOW;
+    SET GLOBAL validate_password.length=4;
+    -- 关闭用户名检查功能
+    SET GLOBAL validate_password.check_user_name = OFF;
+
+
+# mysql的必须使用sudo登录问题解决思路：
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
+FLUSH PRIVILEGES;
+
+#创建远程root 用户
+CREATE USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'root';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+#查看用户信息
+SELECT User, Host FROM mysql.user WHERE User='root';

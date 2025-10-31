@@ -91,7 +91,7 @@ MySQL配置文件路径：
         #指定同步数据库
         #binlog-do-db=db01
         
-        2、重启mysql服务：systemctl restart mysql
+        2、重启mysql服务：sudo systemctl restart mysql
 
         3、登录mysql，创建远程连接账号，并授予主从复制权限
         # 创建itcast用户，并设置密码，该用户可在任意主机连接MySQL服务
@@ -120,8 +120,8 @@ MySQL配置文件路径：
                 SOURCE_USER='itcast',
                 SOURCE_PASSWORD='Root@123456',
                 SOURCE_PORT=3306,
-                SOURCE_LOG_FILE='binlog.000021',
-                SOURCE_LOG_POS=831;
+                SOURCE_LOG_FILE='binlog.000028',
+                SOURCE_LOG_POS=157;
             上述是8.0.23的语法，如果是之前版本的：
             CHANGE MASTER TO MASTER_HOST='192.168.137.128',MASTER_USER='itcast',MASTER_PASSWORD='Root@123456',MASTER_LOG_FILE='binlog.000021',MASTER_LOG_POS=664;
 
@@ -149,6 +149,8 @@ MySQL配置文件路径：
         配置好后查看主从同步状况看参数，下面两个参数为yes则表示成功：
             Replica_IO_Running: No
             Replica_SQL_Running: No
+
+            如果发现问题，查看该文件进行排查：tail -f /var/log/mysql/error.log
         注意事项：
             1、确保主节点服务器防火墙3306端口打开
             2、确保mysql配置允许外服务器连接
@@ -190,6 +192,3 @@ MySQL配置文件路径：
     工具：
         shardingJDBC：基于AOP原理，在应用程序中对本地执行的SQL进行拦截，解析、改写、路由处理。需要自行编码配置实现，只支持java语言，性能较高
         Mycat：数据库分库分表中间件，不用调整代码即可实现分库分表，支持多种语言，性能不及前者
-
-    Mycat概述：Mycat是阿里开源，活跃、基于Java语言编写的MySQL数据库中间件。可以像mysql一样使用mycat，对于开发人员来说根本感觉不到mycat存在
-    

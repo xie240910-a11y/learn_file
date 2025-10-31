@@ -1,0 +1,189 @@
+Mycat概述：Mycat是阿里开源，活跃、基于Java语言编写的MySQL数据库中间件。可以像mysql一样使用mycat，对于开发人员来说根本感觉不到mycat存在
+
+分片配置（schema.xml）:
+    逻辑库：<schema name="TESTDB" checkSQLschema="true" sqlMaxLimit="100" randomDataNode="dn1">
+        name：指定自定义的逻辑库名
+        checkSQLschema：在SQL语句操作指定了数据库名称，执行时自动去除，true：自动去除，false：不自动取出；DB01.TB_ORDER
+        sqlMaxLimit:如果未指定limit进行查询，列表查询模式查询多少条记录
+    逻辑表：<table name="customer" primaryKey="id" dataNode="dn1,dn2" rule="sharding-by-intfile" autoIncrement="true" fetchStoreNodeByJdbc="true">
+        分别规则（rule.xml）：rule="sharding-by-intfile"
+        name：定义逻辑表的表名，在该逻辑库下唯一
+        dataNode：定义编辑表所属的dataNode
+        rule：分片规则的名字，分片规则名字是定义在rule.xml中
+        primaryKey：逻辑表对应真实表主键
+        type：逻辑表的类型，目前逻辑表只有全局表跟普通表，如果未配置就是普通表，全局表配置global
+    数据节点：<dataNode name="dn1" dataHost="localhost1" database="TESTDB" />、
+        name：定义数据节点名称
+        dataHost：数据库实例主机名称，引用自dataHost标签中的name属性
+        database：定义分片所属的数据
+    主机节点：<dataHost name="localhost1" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">]
+        name：唯一标识，供上层标签使用
+        maxCon/minCon：最大/最小连接数
+        balance：负载均衡策略：取值0，1，2，3
+        writeType：写操作分发方式（0：写操作转发到第一个writeHost，第一个挂了切换到第二个，1：写操作随即分发到配置的writeHost）
+        dbDriver：数据库驱动，支持native，jdbc
+
+分片配置（rule.xml）:
+    rule.xml中定义了所有拆分表的规则，在使用过程中可以灵活的使用分片算法，或者对同一个分片算法使用不同的参数，他让分片过程可配置化。主要包含两类标签：tableRule，Function
+    <tableRule name="auto-sharding-long">
+		<rule>
+			<columns>id</columns> // 根据哪个字段进行分片
+			<algorithm>rang-long</algorithm> // 分片规则名称
+		</rule>
+	</tableRule>
+
+    <function name="rang-long"
+			  class="io.mycat.route.function.AutoPartitionByLong">
+		<property name="mapFile">autopartition-long.txt</property> // 外部规则名称
+	</function>
+
+分片配置（server.xml）:
+    property标签：环境配置
+    user标签：当前连接可以使用的用户以及权限
+
+    <user name="root" defaultAccount="true">
+		<property name="password">root</property>
+		<property name="schemas">DB01</property>
+		<property name="defaultSchema">DB01</property>
+        <!-- 表级 DML 权限设置 -->
+		<!-- 		
+		<privileges check="false">
+			<schema name="TESTDB" dml="0110" >
+				<table name="tb01" dml="0000"></table>
+				<table name="tb02" dml="1111"></table>
+			</schema>
+		</privileges>		
+		 -->
+    </user>
+        name：用户名
+        schemas：可访问的逻辑库，多个逻辑库逗号分隔
+        privileges check="false"：使用开启DML权限检查，默认false
+        schema name="TESTDB"：指定逻辑库权限
+        table name="tb01"：指定逻辑表权限
+        dml="0110"：每个数字以01为准，分别对应：增、改、查、删
+        如果逻辑库与逻辑表权限不一致，采用就近原则，按表的权限算
+	<user name="user">
+		<property name="password">user</property>
+		<property name="schemas">DB01</property>
+		<property name="readOnly">true</property>
+		<property name="defaultSchema">DB01</property>
+	</user>
+
+连接mycat：mysql -h 127.0.0.1 -P 8066 -u root -p
+连接Mycat管理: mysql -h 192.168.137.128 -P 9066 -u root -p
+
+Mycat管理连接：
+    Mycat默认开通两个端口，可以在server.xml中进行修改。
+    8066数据访问端口，即可在DML和DDL操作
+    9066数据库管理端口，即mycat服务管理控制功能，用于管理mycat的整个集群状态
+    mysql -h 192.168.137.128 -P 9066 -u root -p
+    show @@help 查看mycat管理工具帮助文档
+    show @@version 查看mycat的版本
+    reload @@config 重新加载mycat的配置文件
+    show @@datasource 查看mycat的数据源信息
+    show @@datanode 查看mycat现有的分片节点信息
+    show @@threadpool 查看mycat的线程池信息
+    show @@sql 查看执行的sql
+    show @@sql.sum 查看执行的sql统计
+
+web监控mycat：mycat-web
+
+mycat读写分离：
+    原理：MySQL的主从复制是基于二进制日志实现的
+
+    <dataHost name="dhost7" maxCon="1000" minCon="10" balance="1"
+              writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+        <heartbeat>select 1</heartbeat>
+        <writeHost host="master"
+           url="jdbc:mysql://192.168.137.128:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai"
+           user="root"
+           password="root">
+           <readHost host="slave" url="jdbc:mysql://192.168.137.130:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai" user="root" password="root">
+        </whitehost>
+    </dataHost>
+    balance参数值含义：
+        0、不开启读写分离机制，所有读操作都发送到当前可用的writeHost上
+        1、全部的readHost与备用的writeHost都参与select语句的负载均衡，主要针对双主双从模式
+        2、所有的读写操作都随机在writeHost，readHost上分发
+        3、所有的读请求随机分发到writeHost对应的readHost上执行，writeHost不负担读压力
+        1与3效果类似，但是1针对双主双从；
+
+    双主双从：
+        master1(m1) -> slave1(s1)
+         m1-m2互相拷贝
+        master2(m2) -> slave2(s2)
+        
+        主库m1配置：
+            server-id=1
+            #指定同步数据库
+            binlog-do-db=db01
+            binlog-do-db=db02
+            binlog-do-db=db03
+            #作为从库的时候，有写入操作也要更新二进制日志文件
+            log-slave-updates
+
+            sudo systemctl restart mysql
+        
+        主库m2配置：
+            server-id=3
+            #指定同步数据库
+            binlog-do-db=db01
+            binlog-do-db=db02
+            binlog-do-db=db03
+            #作为从库的时候，有写入操作也要更新二进制日志文件
+            log-slave-updates
+
+            sudo systemctl restart mysql
+           
+        两台mysql都需要创建主从复制用户：
+        CREATE USER 'itcast'@'%'IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+        # 为'itcast'@'%'用户分配主从复制权限
+        GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+        
+        查看二进制日志文件位置：
+        show master status;
+
+        从库s1配置：
+            server-id=2
+
+            sudo systemctl restart mysql
+            
+        从库s2配置：
+            server-id=4
+
+            sudo systemctl restart mysql
+
+        配置主库m1对应主库m2
+        配置主库m2对应主库m1
+        m1 <==> m2
+
+        配置从库s1对应主库m1
+        配置从库s2对应主库m2
+        m1 => s1
+        m2 => s2
+        具体配置看mysql运维上查看如何配置主从
+
+        mycat配置：
+            <schema name="DB_TEST" checkSQLschema="true" sqlMaxLimit="100" dataNode="dn7" />
+            
+            <dataNode name="dn7" dataHost="dhost7" database="db_test" />
+            
+            <dataHost name="dhost7" maxCon="1000" minCon="10" balance="1" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+                <heartbeat>select 1</heartbeat>
+                # 第一个主从配置信息
+                <writeHost host="master"
+                    url="jdbc:mysql://192.168.137.128:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai"
+                    user="root"
+                    password="root">
+                    <readHost host="slave" url="jdbc:mysql://192.168.137.130:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai" user="root" password="root">
+                </whitehost>
+
+                # 第2个主从配置信息
+                <writeHost host="master"
+                    url="jdbc:mysql://192.168.137.128:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai"
+                    user="root"
+                    password="root">
+                    <readHost host="slave" url="jdbc:mysql://192.168.137.130:3306?useUnicode=true&amp;characterEncoding=utf8&amp;serverTimezone=Asia/Shanghai" user="root" password="root">
+                </whitehost>
+            </dataHost>
+            具体配置需要根据实际更改
