@@ -1,0 +1,255 @@
+下载地址：https://golang.google.cn/dl/
+目录不要有中文跟空格
+
+测试go：go run main.go
+编译二进制：go build mian.go
+初始化Go模块：go mod init demo1
+自动下载依赖包：go mod tidy
+下载依赖包：go get github.com/shopspring/decimal
+依赖包安装路径：go env GOPATH
+
+go语言定义了变量必须使用
+go语言导入了包必须使用
+
+变量定义：
+    var 变量名 变量类型（可省略） = xxx
+    变量初始化不赋值为空，变量名称为数字，字母，下划线组成，但是首字母不能是数字。关键字，保留字不能是变量名称，同一作用域变量名称不能重复声明
+        var username string
+        username = "zhangsan"
+
+        var username string = "zhangsan"
+        var username = "zhangsan"
+
+    一次声明多个变量
+        var 变量名1, 变量名2 变量类型
+        变量名1 = xxx
+        变量名2 = xxx
+
+            var a1, a2 string
+            a1 = "xx1"
+            a2 = "xx2"
+
+        var (
+            变量名 类型
+            变量名 类型
+        )
+        var (
+            name string
+            age int
+            sex string
+        )
+        name = "zhangsan"
+        age = 20
+        sex = "男"
+类型推导（全局变量不能使用类型推导）：
+    变量名 := xxx
+
+    方法里面可以使用短变量声明
+        a, b, c := 10, 20, "C"
+fmt包：
+    fmt.Println　可以换行
+    fmt.Print　　不能换行
+    fmt.Printf　　格式化输出 %v占位符 原样输出数据 %T 输出数据类型，%d十进制 %b 二进制 %o 八进制 %x 16进制输出
+                    %f 输出浮点型数据默认保留6位，%.2f保留2位小数
+    var a int= 10
+	b := 20
+	c := 30
+	fmt.Println("a=",a, "b=",b, "c=",c)
+	fmt.Printf("a=%v, b=%v, c=%v",a,b,c)
+
+常量定义(初始化 需要设置数值，值不可改变)：
+    const pi = 3.14159
+    多个变量声明
+    const (
+        A="A"
+        B="B"
+    )
+    后面值不写，与第一个值一样
+    const (
+        A=100
+        B
+        C
+        D
+    )
+    iota在const关键字出现时被重置为0
+    const (
+        A=iota // 0
+        B      // 可以用_匿名展位 1
+        C      // 2
+        D      // 3
+    )
+    const (
+        A=iota    // 0
+        B=100     //100 依旧占位
+        C=iota    // 2
+        D         // 3
+    )
+    多个iota占一行
+    const (
+        n1, n2 = iota + 1, iota + 2 // 1,2
+        n3, n4 // 2,3 
+        n5, n6 // 3,4
+    )
+
+方法的参数以及返回值定义
+    func 方法名(参数列表) (返回参数列表){}
+
+    func　getUserInfo() (string, int)
+    {
+        return "zhangsan", 10
+    }
+
+    匿名变量：如果不需要某个返回参数，用下划线代替
+        var username, _ := getUserInfo()
+    
+golang数据类型介绍：
+    Go基本数据类型：整形，浮点型，布尔型，字符型
+    复合数据类型：数组，切片，结构体，函数，map，通道（channel），接口等
+
+整形：
+    64位操作系统默认用int64，占8字节，32位默认int32，四字节
+    int：
+        var num int = 10
+    int8：一个字节 有符号
+    int16：两个字节 有符号
+    int32: 四个字节，有符号
+    int64：八个字节，有符号
+
+    uint8：一个字节 无符号
+    uint16：两个字节 无符号
+    uint32：四个字节 无符号
+    uint64：八个字节 无符号
+
+    不同int类型之间，不可以直接运算，需要进行类型转换
+    var a1 int32 = 10
+    var a2 int64 = 20
+    fmt.Println(a1 + a2) 报错
+    fmt.Println(int64(a1) + a2)
+    高位向地位转换需要注意，是否能够放下数据，否则会出问题
+
+浮点型：
+    64操作系统默认 float64
+    float32 占用4字节
+    float64 占用8字节
+
+    科学计数法
+    var f2 = 3.14e2 // 表示f2 等于3.14 * 10的二次方
+    var f2 = 3.14e-2 // 表示f2 等于3.14 / 10的二次方
+
+    float精度丢失问题
+    var f4 float64 = 1129.6
+    fmt.Println(f4 * 100) // 112959.99999999999999999
+
+    m1 := 8.2
+    m2 := 3.8
+    fmt.Println(m1 - m2) // 4.399999999999
+    可以通过fmt.Println(decimal.NewFromFloat(m1).Sub(decimal.NewFromFloat(m2)))进行运算，保证精度问题
+    float转换成int 小数点后数被省略，不会四舍五入
+
+布尔值：不允许转换为int，默认是false，int也不允许转换成布尔类型
+
+字符串类型：
+    \ 转义符
+    \n 换行符
+    多行字符串 ``
+    s1 := `你好
+        我是
+        xxj
+    `
+    拼接字符串：+号拼接
+    s1 := "xxj"
+    s2 := "nihao"
+    s3 := s1+s2
+
+    strings：
+        分割字符串：Split
+            arr := strings.Split(str1, "-")
+        join操作：Join 
+            strings.Join(arr, "*")
+
+            var str1 = "123-456-789"
+            arr := strings.Split(str1, "-")
+            fmt.Println(arr) // [123, 456, 789]切片
+            // Join切片转换成字符串
+            str2 := strings.Join(arr, "*")
+            fmt.Println(str2) // [123, 456, 789]切片
+        ---------------------------------
+        判断是否包含：contains
+            str1 := "this is str"
+            str2 := "this"
+            flag := strings.Contains(str1, str2)
+            fmt.Println(flag)
+        前缀/后缀判断：HasPrefix，HasSuffix
+            str1 := "this is str"
+            str2 := "this"
+            flag := strings.HasPrefix(str1, str2) // HasSuffix同理
+            fmt.Println(flag)
+        子串出现位置：LastIndex/Index
+            str1 := "this is str"
+            str2 := "is"
+            index := strings.Index(str1, str2) // HasSuffix同理
+            fmt.Println(index)
+    
+字符类型（字符属于int类型）：
+    var a = 'a'
+    fmt.Printf("值：%v, 类型%T\n", a, a)//输出对应acciss码值, int32
+    fmt.Printf("值：%c")//输出 a
+
+    var str = "this"
+    fmt.Printf("值：%c, 类型%T\n", str[2], str[2])//输出对应acciss码值, int32
+    golang中汉字使用utf-8类型
+
+    如果需要更改字符串内容，需要将字符串转换为byte数组（全英文）或者rune数组（存在中文或者其他国家文字）
+    完成后再转换为string，无论那种转换都会重新分配内存，并复制字节数组
+    s1 := "big"
+    byteS1 := []byte(s1)
+    byteS1[0] = 'p'
+    fmt.Println(string(byteS1))
+
+    s1 := "你好"
+    runeS1 := []rune(s1)
+    runeS1[0] = '我'
+    fmt.Println(string(runeS1))
+
+格式转换:
+    fmt.Sprintf() %d 整形, %f 浮点型, %t 布尔型, %c 字符型
+        i := 10
+        f := 1.23
+        t := true
+        b := 'a'
+        str1 := fmt.Sprintf("%d", i)
+    
+    strconv
+        把其他类型转换string类型
+            i := 10
+            f := 1.23
+            t := true
+            b := 'a'
+            str1 := strconv.FormatInt(int64(i), 10)
+            str1 := strconv.FormatFloat(int64(i), 'f', 3, 64)
+                // 第一个参数，传入转换的数字
+                第二个参数，转换格式类型，'f'(-ddd.dddd), 'b'(指数为二进制), 'e'(十进制指数), 'E'(shijinz zhishu ), 'g'(指数很大用e，否则用f)， 'G'(指数很大用e，否则用f)
+                第三个参数，保留的小数点
+                第四个参数，格式化类型 32,64
+            str1 := strconv.FormatBool(t)
+            str1 := strconv.FormatUint(uint64(b), 10)
+    
+        字符串转整形：
+            strconv.ParseInt()
+                // 第一个参数 string数据
+                // 第二个参数 进制
+                // 第三个参数 位数 16，32,64
+                str := "12345"
+                num, _ := strconv.ParseInt(str, 10, 64)
+                fmt.Printf("值：%v, 类型：%T\n", num, num)
+            strconv.ParseFloat()
+                // 第一个参数 string数据
+                // 第二个参数 位数 32,64
+                str := "12345.123"
+                num, _ := strconv.ParseFloat(str, 64)
+                fmt.Printf("值：%v, 类型：%T\n", num, num)
+
+    布尔型无法与字符型直接转换
+
+运算:
+    取模运算需要注意:余数 = 被除数 - (被除数 / 除数) * 除数

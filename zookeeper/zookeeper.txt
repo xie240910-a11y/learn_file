@@ -1,0 +1,36 @@
+Zookeeper概念：
+    Zookeeper是Apache Hadoop项目下的一个子项目，是一个树形目录服务
+    Zookeeper翻译过来就是动物园管理员，他是用来管Hadoop（大象），Hive（蜜蜂），Pig（小猪）的管理员，简称zk
+    Zookeeper是一个分布式，开源的分布式应用程序的协调服务
+    Zookeeper提供的主要功能包括：
+        配置管理
+        分布式锁
+        集群管理
+    Zookeeper 数据模型：
+        ZooKeeper 是一个树形目录服务，其数据模型与Unix的文件系统目录树很类似，拥有一个层次化的结构
+        这里面的每一个节点都被称为：ZNode，每个节点上都会保存自己的数据的和节点信息
+        节点可以拥有子节点，同时也允许少量（1MB）数据存储在该节点之下
+        节点可以分四大类
+            PERSISTENT持久化节点
+            EPHEMERAL临时节点：-e
+            PERSISTENT_SEQUENTIAL持久化顺序节点：-s
+            EPHEMERAL_SEQUENTIAL临时顺序节点：-es
+    
+    服务端常用命令：
+        ./zkServer.sh start 
+        ./zkServer.sh stop
+        ./zkServer.sh status
+        ./zkServer.sh restart
+
+    客户端常用命令：
+        ./zkCli.sh -server localhost:2181
+        ls / 查看目录
+        create /app1 itheima 创建目录（后面可以跟数据）,不能重复创建数据
+        get /app1 获取数据
+        set /app1 itheima 设置数据
+        delete app1 删除数据
+        help 查看指令
+
+        create -e /app1 临时节点
+        create -s /app  顺序持久化节点
+        ls2 /app1 查看节点详细信息
