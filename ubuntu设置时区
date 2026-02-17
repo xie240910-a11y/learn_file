@@ -1,0 +1,2 @@
+查看时区：date 
+设置时区为上海：sudo timedatectl set-timezone Asia/Shanghai

@@ -11,6 +11,13 @@
 go语言定义了变量必须使用
 go语言导入了包必须使用
 
+go程序热加载：
+    go install github.com/pilu/fresh@latest
+    fresh
+
+    go install github.com/air-verse/air@latest
+    对应项目下调用：air / 用的比较多
+
 变量定义：
     var 变量名 变量类型（可省略） = xxx
     变量初始化不赋值为空，变量名称为数字，字母，下划线组成，但是首字母不能是数字。关键字，保留字不能是变量名称，同一作用域变量名称不能重复声明
@@ -49,8 +56,9 @@ go语言导入了包必须使用
 fmt包：
     fmt.Println　可以换行
     fmt.Print　　不能换行
-    fmt.Printf　　格式化输出 %v占位符 原样输出数据 %T 输出数据类型，%d十进制 %b 二进制 %o 八进制 %x 16进制输出
-                    %f 输出浮点型数据默认保留6位，%.2f保留2位小数
+    fmt.Printf　　格式化输出 %v占位符 原样输出数据 %#v 打印详细信息 %T 输出数据类型，%d十进制 %b 二进制 %o 八进制 %x 16进制输出
+                    %f 输出浮点型数据默认保留6位，%.2f保留2位小数 
+                    %p 查看地址
     var a int= 10
 	b := 20
 	c := 30
@@ -253,3 +261,399 @@ golang数据类型介绍：
 
 运算:
     取模运算需要注意:余数 = 被除数 - (被除数 / 除数) * 除数
+    golang中没有前置++，只有后置i++
+
+if else语句：
+    if 表达式1 { // 注意：if 后大括号必须紧挨着关键字
+        分支1
+    } else if 表达式2 {
+        分支2
+    } else {
+        分支3
+    }
+    
+for语句：
+    for i := 1; i <= 10; i++ {// 注意：for 后大括号必须紧挨着关键字
+        fmt.Println(i);
+    }
+
+    var i = 1 // 初始化可以放外面，但是必须加分号
+    for ; i <= 10; i++ {// 注意：for 后大括号必须紧挨着关键字
+        fmt.Println(i);
+    }
+
+    for i <= 10 {// 注意：for 后大括号必须紧挨着关键字
+        fmt.Println(i);
+        i++ // 注意死循环
+    }
+
+for range（键值循环）：
+    // 遍历字符
+    var str = "你好golang"
+	for k, v := range str {
+		fmt.Printf("key=%v value=%c\n", k, v)
+	}
+
+switch case语句：
+    var ext = ".html"
+	switch ext {
+	case ".html":
+		fmt.Println("this is html")
+        // golang中break可以不写
+	case ".css":
+		fmt.Println("this is css")
+	default:
+		fmt.Println("no found")
+	}
+
+    分支条件可以有多个值
+    case 1, 3, 5, 7, 9:
+    case "A", "B", "C", "D":
+
+    可以写条件：
+    case age > 20:
+
+    fallthrough:可以穿透下一层，可以写多个
+        var ext = ".html"
+        switch ext {
+        case ".html":
+            fmt.Println("this is html")
+            // golang中break可以不写
+            fallthrough
+        case ".css":
+            fmt.Println("this is css")
+            fallthrough
+        default:
+            fmt.Println("no found")
+        }
+
+声明数组：
+    数组长度也是数据类型的一部分
+
+    var 数组名称 [数组长度] 数组类型
+    var arr1 [3] int
+    var arr2 [4] int
+    var strArr [3] string
+    
+    初始化：
+        1、
+            var arr1 [3]int
+            arr1[0] = 23
+            arr1[1] = 10
+            arr1[2] = 32
+            fmt.Println(arr1)
+
+            var arr1 [3]string
+            arr1[0] = "java"
+            arr1[1] = "c++"
+            arr1[2] = "golang"
+            fmt.Println(arr1)
+        2、
+            var arr1 = [3]int{1,3,4}
+            var str1 = [3]string{"a", "aa", "aaa"}
+
+        3、动态检查个数 '...'
+            var arr1 = [...]{1,2,3,4}
+        
+        4、指定数值
+            var arr1 = [...]{0:1, 1:2, 4:10}
+
+        遍历：
+            var arr1 = [3]int{1,3,4}
+            for i:= 0; i< len(arr1);i++{
+                fmt.Println(arr[i])
+            }
+
+            for _, val := range arr1 {
+                fmt.Println(val)
+            }
+
+值类型，引用类型：
+    数组是值类型，赋值后数据相互不影响
+        var arr[3]int
+    切片是引用类型，赋值共享一份数据
+        切片只声明不赋值是nil
+        var arr[]int // []不加数字,默认为nil
+        扩容需要使用append
+        var arr = []{1,2,3,4}
+        var arr = []{0:1,1:2,2:3,3:4}
+
+        基于数组 定义切片,切片也是一样的
+        a := [5]{1,3,4,5,6}
+        b := a[1:]
+        
+        make创建切片  make([]T, size, cap)
+        var sliceA = make([]int, 4,8) // [0, 0, 0, 0]根据size进行初始化
+
+        切片没办法通过下标给切片扩容，需要使用append方法
+        append(切片变量名，数值)
+        sliceA = append(sliceA, 12)
+        sliceA = append(sliceA, 24)
+        fmt.Println("%v - %v - %v", sliceA, len(sliceA), cap(sliceA))
+        
+        append可以合并切片
+        sliceA := []string{"php, "java"}
+        sliceB := []string{"nodejs", "go}
+        sliceA = append(sliceA, sliceB...)// 固定语法后面加...
+         
+        扩容策略 2倍扩容
+
+        使用copy进行深拷贝，避免共享内存地址
+        切片没有专门删除元素方法
+        a := []int{1,2,3,4,5,6,7,8,9}
+        a = append(a[:2], a[3:]...) //删除索引2
+
+map类型（无序，初始化使用，引用数据类型）:
+    var userinfo = make(map[string]string)
+    userinfo["username"] = "zhangsan"
+    userinfo["age"] = "20"
+    userinfo["sex"] = "男"
+    fmt.Println(userinfo["username"])
+
+    var userinfo = map[string]string{
+        "username":"zhangsan",
+        "age": "20",
+        "sex": "男",
+    }
+    fmt.Println(userinfo["username"])
+
+    for k, v := range userinfo{
+        fmt.Printf("key:%v, value:%v \n", k, v)
+    }
+
+    删除map内的数据：delete
+    delete(userinfo, "sex")
+
+    创建map类型切片
+    var userinfo = make([]map[string]string, 3, 3)
+
+创建函数：
+    func 函数名（参数名 参数类型）（返回参数类型）{
+
+    }
+    // 相同类型可以简写 x, y int, 如果存在多个返回值，需要用括号括起来（int, string）
+    func sumFn(x int, y int) int {
+        return x + y
+    }
+    var sum1 = sumFn(1,2)
+
+    // 可以返回定义返回变量名，然后直接return
+    func sumFn(x int, y int) (sum int) {
+        sum = x + y
+        return
+    }
+    sum1 := sumFn(1,2)
+
+定义函数类型（类似c++的function）：
+    type calc func(int, int)int // 定义一个回调函数calc
+    func sumFn(x int, y int) (sum int) {
+        sum = x + y
+        return
+    }
+
+    var c calc
+    c = sumFn
+
+匿名函数：
+    func main() {
+        func () { //不能加名称，匿名自执行函数
+            fmt.Println("test...)
+        }
+        // 匿名函数赋值给fn
+        var fn = func(x, y int) int {
+            return x * y
+        }
+    }
+
+闭包：函数内部嵌套一个函数 // 避免定义全局变量，但是变量常驻内存
+    func adder() (func() int) {
+        int i = 10
+        return func() int{
+            return i + 1
+        }
+    }
+
+defer延时执行被定义语句（延时执行函数，函数参数需要确定）：
+    fmt.Println("开始")
+    defer fmt.Println("1")
+    defer fmt.Println("2")
+    defer fmt.Println("3")
+    fmt.Println("结束")
+    // 逆序执行，压栈后进先出原则 3 2 1
+
+    可以在函数中自执行
+    func f1() {
+        fmt.Println("开始")
+        defer func() {
+            fmt.Println("1")
+            fmt.Println("2")
+        } () // 注意加括号执行
+        fmt.Println("结束")
+    }
+    // 函数返回0
+    func f3() int {
+        var a int // 0
+        defer func() {
+            a++
+        }
+        return a
+    }
+    // 命名函数 函数返回1 
+    func f3() (a int) {
+        defer func() {
+            a++
+        }
+        return a
+    }
+    原因：defer语句执行原理，先对返回值赋值，再执行defer语句最后return指令
+          普通函数:先对返回值赋值，然后return指令
+    
+panic/recover函数(panic可以在任意地方引发，但是recover只有在defer调用的函数中有效)：
+    func fn1(){
+        fmt.Println("fn1")
+    }
+
+    func fn2(){
+        defer func() {
+            err := recover()
+            if err != nil {
+                fmt.Println("err:", err)
+            }
+        }()
+        panic("抛出一个异常")
+    }
+    func mian (){
+        // fn1()
+        // fn2() // 程序崩溃，直接结束
+        // fmt.Println("结束") 
+    }
+
+    // 使用error创建panic
+    func readFile(fileName string) error {
+        if fileName == "main.go" {
+            return nil
+        } else {
+            return error.New("读取文件失败")
+        }
+    }
+
+time方法：
+    获取当前日期：
+        timeObj := time.Now()
+        fmt.Println(timeObj)
+    获取年月日时分秒
+        timeObj.Year()
+        timeObj.Month()
+        timeObj.Day()
+        timeObj.Hour()
+        timeObj.Minute()
+        timeObj.Second()
+
+    格式化时间格式：
+        // 注意虚拟机时区：sudo timedatectl set-timezone Asia/Shanghai
+        // 备注2006-01-02 15:04:05表示24小时制 2006-01-02 03:04:05表示12小时制
+        loc, _ := time.LoadLocation("Asia/Shanghai") // 加载上海时区（UTC+8）
+        timeObj := time.Now().In(loc)               // 转换为指定时区
+        str := timeObj.Format("2006-01-02 15:04:05")
+        fmt.Println("time:", str)
+
+    获取当前时间戳：
+        unixtime := timeObj.Unix() //获取当前时间戳
+        unixNatime := timeObj.UnixNano() //获取当前纳秒时间戳
+    
+    时间戳转日期对象：
+        unixTime := 1762996260
+        timeObj := time.Unix(unixTime)
+    
+    把日期字符串转换时间戳：
+        str := "2025-11-13 09-11-00"
+        var tmp = "2006-01-02 03-04-05"
+        timeObj, _ := time.ParseInLocation(tmp, str, time.Local)
+    
+    日期间隔：
+        time.Millisecond 一毫秒
+	    time.Second 一秒
+    
+    时间操作函数
+        timeObj := time.Now()
+        timeObj = timeObj.Add(time.Hour)
+    
+定时器：
+    NewTicker：
+        ticker := time.NewTicker(time.Second) //每隔一秒执行
+        n := 5
+        for t := range ticker.C {
+            n--
+            fmt.Println(t)
+            if n == 0 {
+                ticker.Stop() // 终止执行
+                break
+            }
+        }
+    Sleep：
+        fmt.Println("aaa")
+	    time.Sleep(time.Second)
+        fmt.Println("bbb")
+        time.Sleep(time.Second)
+        fmt.Println("ccc")
+        time.Sleep(time.Second)
+
+golang中的指针
+    var a = 10
+    var b = &a // 此时b类型是*int
+
+make创建(只用于map，slice（切片），channel初始化，返回还是这三个引用本身)
+    创建切片：var a = make([]int, 4, 4)
+
+new函数分配内存（类型的内存分配，并且内存对应的值为类型零值，返回的是指向类型的指针）：
+    a := new(int)
+    var b *int
+    new(b)
+    *b = 100
+
+结构体：
+    type关键词定义结构体（也可以定义类型别名）
+    type myInt int
+    type myFn func(int, int) int
+    type myFloat = float64
+
+    // 类名，类内属性 首字母大写 公有，首字母小写 私有
+    type Person struct {
+        name string
+        age int
+        sex string
+    }
+    // 第一种定义方式
+    var p1 Person
+    // '.' 实际是(*p1).name
+    p1.name = "zhangsan"
+    p1.sex = "男"
+    p1.age = 20
+    // 第二种定义方式
+    var p2 = new(Person)
+    p2.name = "zhangsan"
+    p2.sex = "男"
+    p2.age = 20
+    // 第三种定义方式
+    var p3 = &Person{}
+    p3.name = "zhangsan"
+    p3.sex = "男"
+    p3.age = 20
+    // 第四种定义方式, 注意最后一行也要加逗号
+    var p4 = Person {
+        name : "zhangsan",
+        sex : "男",
+        age : 20,
+    }
+    // 第五种定义方式指针类型
+    var p5 = &Person {
+        name : "zhangsan",
+        sex : "男",
+        age : 20,
+    }
+    // 第六种定义方式指针类型，省略定义
+    var p5 = &Person {
+        name : "zhangsan",
+        sex : "男", 
+    }
+    

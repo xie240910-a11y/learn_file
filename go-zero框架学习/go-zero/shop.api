@@ -1,0 +1,42 @@
+// 语言翻倍
+syntax = "v1"
+// 类型定义快 - 定义焦点图相关数据结构
+type (
+    // FocusResp焦点图响应结构
+    FocusResp {
+        // FocusResp焦点图列表
+        Result []*Focus `json:"result"`
+    }
+    // Focus 焦点图数据结构
+    Focus {
+        // Id 焦点图ID
+        Id int64 `json:"id"`
+        Name string `json:"name"`
+        Pic string `json:"pic"`
+        Url string `json:"url"`
+        Postion int64 `json:"postion"`
+    }
+)
+
+type (
+    ArticleResp {
+        Result []*Article `json:"result"`
+    }
+    Focus {
+        Id int64 `json:"id"`
+        Title string `json:"title"`
+        Description string `json:"description"`
+        Pic string `json:"pic"`
+        Content int64 `json:"content"`
+    }
+)
+
+service shop-api {
+    @handler GetFocusList
+    get /list returns (ForcusResp)
+}
+
+@server (
+    group: article
+    prefix: /api/article
+)

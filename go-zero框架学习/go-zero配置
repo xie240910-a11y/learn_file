@@ -1,0 +1,40 @@
+1、安装golang
+2、配置国内代理
+    go env -w GOPROXY=https://goproxy.cn,direct
+    go env GOPROXY
+3、安装goctl（goctl是go-zero的内置脚手架，是提升开发效率的一大利器吗，可以一键生成代码，文档，部署k8syaml，dockerfile等）
+    go install github.com/zeromicro/go-zero/tools/goctl@latest
+    验证：
+        goctl --version
+4、安装protoc
+    goctl env check --install --verbose --force
+
+5、创建初始化项目
+    // 创建工作目录并进入该目录
+    mkdir -p ~/workspace/api && cd ~/workspace/api
+    // 执行指令生产demo服务
+    goctl api new firstdemo  (Done.) // goctl api go --api shop.api --dir .
+    cd firstdemo
+    go mod tidy
+
+go-zero项目文件夹简介：
+    /etc 下的yaml文件是项目配置文件
+    /internal config 加载yaml配置文件
+    /handler 处理配置路由
+    /logic 处理接口响应
+    /svc 配置项目服务的接口、
+    /type 配置接口请求响应参数
+
+goctl其他参数:
+    goctl api new firstdemo 创建新项目
+    goctl api format --dir . 格式化项目
+    goctl api go --api firstdemo.api --dir .  为api生成对应的go文件，一般用于已写好的api文件
+    goctl api doc --dir . --o ./doc
+
+go程序热加载：
+    go install github.com/pilu/fresh@latest
+    对应项目下调用：fresh
+
+    air用的比较多
+    go install github.com/air-verse/air@latest
+    对应项目下调用：air 
