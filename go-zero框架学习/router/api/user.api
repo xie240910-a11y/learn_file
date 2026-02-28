@@ -1,0 +1,21 @@
+syntax = "v1"
+
+type (
+	AddUserRequest {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
+		Sex  string `json:"sex"`
+	}
+)
+
+
+
+@server (
+	group:  user
+	prefix: /api/user
+)
+service shop-api {
+    @doc "新增用户"
+	@handler AddUser
+	post /addUser (AddUserRequest) returns (CommonResponse)
+}

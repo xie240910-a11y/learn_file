@@ -1,0 +1,5 @@
+Name: shop-api
+Host: 0.0.0.0
+Port: 8888
+Mysql:
+  DataSource: root:root@tcp(192.168.137.128:3306)/focus?charset=utf8mb4&parseTime=true&loc=Local

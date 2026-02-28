@@ -1,0 +1,60 @@
+syntax = "v1"
+
+type (
+    FocusRequestById {
+        Id int64 `path:"id"`
+    }
+    FocusRequest {
+        Id int `form:"id"`
+    }
+    // 增加轮播图
+    AddFocusRequest {
+        Title string `form:"title"`
+        Pic string `form:"pic"`
+        Link string `form:"link"`
+        Position int `form:"position"`
+    }
+    // 修改轮播图
+    UpdateFocusRequest {
+        Id int `form:"id"`
+        Title string `form:"title"`
+        Pic string `form:"pic"`
+        Link string `form:"link"`
+        Position int `form:"position"`
+    }
+    // 轮播图
+    Focus{
+        Id int `json:"id"`
+        Title string `json:"title"`
+        Pic string `json:"pic"`
+        Link string `json:"link"`
+        Position int `json:"position"`
+    }
+)
+
+@server (
+    group:  focus
+	prefix: /api/focus
+)
+
+service shop-api {
+    @doc "获取轮播图"
+	@handler GetFucus
+	get / returns (CommonResponse)
+
+    @doc "根据id获取轮播图"
+	@handler GetFucusById
+	get /:id (FocusRequestById) returns (CommonResponse)
+
+    @doc "新增轮播图"
+	@handler AddFucus
+	post /add (AddFocusRequest) returns (CommonResponse)
+
+    @doc "修改轮播图"
+	@handler UpdateFucus
+	post /update (UpdateFocusRequest) returns (CommonResponse)
+
+    @doc "删除轮播图"
+	@handler DeleteFucus
+	post /delete (FocusRequest) returns (CommonResponse)
+}

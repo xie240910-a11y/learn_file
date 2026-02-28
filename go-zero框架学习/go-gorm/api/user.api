@@ -1,0 +1,20 @@
+syntax = "v1"
+
+type (
+    UserRequest {
+        UserName string `json:"username"`
+        PassWord string `json:"password"`
+    }
+)
+
+@server (
+    group:  user
+	prefix: /api/user
+)
+
+service orm-api {
+    @doc "获取轮播图"
+	@handler Login
+	post /login (UserRequest) returns (CommonResponse)
+
+}

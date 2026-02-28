@@ -1,7 +1,9 @@
 索引：
 索引引擎：Innodb（行锁默认）支持rcid，MyiSAM（表锁）不支持，Memory（内存存储）
 索引分类：B-Tree，Hash，R-Tree，Full-text
-Innodb(B-Tree)：聚集索引（必须有，且唯一，主键存在则设主键为聚集索引，主键不存在则设第一个唯一索引为聚集索引，否则默认分配一个rowid），二级索引（数据索引分开，查询到聚集索引的id再二次查找）
+Innodb(B-Tree)：
+    聚集索引（必须有，且唯一，主键存在则设主键为聚集索引，主键不存在则设第一个唯一索引为聚集索引，否则默认分配一个rowid）
+    二级索引（数据索引分开，查询到聚集索引的id再二次查找）
 
 查看SQL的所有操作执行频率：SHOW GLOBAL STATUS LIKE 'Com_______';
 查询慢查询日志：
@@ -48,7 +50,7 @@ distinct: 不重复的值；select count(distinct email) FROM table_name;
 插入insert优化：
     1、批量插入代替单条插入，建议1000条
     2、手动提交事务（自动提交事务带来频繁的打开提交事务，浪费资源）
-    u3、主键顺序插入(针对load指令)
+    3、主键顺序插入(针对load指令)
         如果涉及大批量插入数据，建议使用load加载磁盘数据插入：
             客户端连接服务端时，加上参数 --local-infile: mysql --local-infile -u root -p
             查看local_infile服务是否开启：select @@local_infile;

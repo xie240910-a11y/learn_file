@@ -1,0 +1,11 @@
+syntax = "v1"
+
+type CommonResponse {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+	Success bool        `json:"success"`
+}
+
+import "./api/focus.api"
+import "./api/user.api"

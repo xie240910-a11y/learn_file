@@ -12,6 +12,9 @@ CREATE TABLE users (
     email VARCHAR(100),                    -- 邮箱
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 创建时间
 );
+
+删除表：drop table 表名
+
 -- 创建表定义索引
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,

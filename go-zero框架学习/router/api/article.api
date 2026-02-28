@@ -1,0 +1,28 @@
+syntax = "v1"
+
+// `form:"id"` get post put delete请求都是使用`form:"id"`备注
+type (
+	ArticleRequest {
+		Id int `path:"id"`
+	}
+	Article {
+		// Id 焦点图ID
+		Id      	int  	`json:"id"`
+		Title   	string  `json:"title"`
+		Content 	string  `json:"content"`
+		Description string  `json:"description"`
+		Pic 		string  `json:"pic"`
+
+	}
+)
+
+// 进行分组，后续相关/api/article路由用 '/'取代
+@server (
+	group:  article
+	prefix: /api/article
+)
+service shop-api {
+    @doc "获取文章信息"
+	@handler GetArticleById
+	get /:id (ArticleRequest) returns (CommonResponse)
+}

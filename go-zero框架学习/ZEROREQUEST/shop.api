@@ -1,0 +1,38 @@
+syntax = "v1"
+
+// info (
+//  title: // TODO: add title
+//  desc: // TODO: add description
+//  author: "xiaoxie"
+//  email: "1479930874@qq.com"
+// )
+type CommonResponse {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+	Success bool        `json:"success"`
+}
+
+// `form:"id"` get post put delete请求都是使用`form:"id"`备注
+type (
+	FocusRequest {
+		Id string `form:"id"`
+	}
+	// Focus 焦点图数据结构
+	Focus {
+		// Id 焦点图ID
+		Id    string `json:"id"`
+		Title string `json:"title"`
+		Image string `json:"image"`
+		Link  string `json:"link"`
+	}
+)
+
+service shop-api {
+	@handler GetFocus // TODO: set handler name and delete this comment
+	get /api/focus returns (CommonResponse)
+
+	@handler GetFocusById // TODO: set handler name and delete this comment
+	get /api/oneFocus (FocusRequest) returns (CommonResponse)
+}
+

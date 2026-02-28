@@ -13,7 +13,7 @@
         select count(*) from student;
     end;
 调用存储过程：
-    call 存储名称（）;
+    call 存储名称();
     call p1();
 
 查看存储过程：

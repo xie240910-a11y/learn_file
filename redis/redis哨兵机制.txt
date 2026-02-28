@@ -1,0 +1,42 @@
+Redis哨兵机制用来实现集群故障恢复
+    监控：Sentinel会不断检查master跟slave是否按预期工作
+    自动故障恢复：master故障，Sentinel会自动将一个slave提升为master，故障实例恢复按新master为主
+    通知：Sentinel充当Redis客户端的服务发现来源，当集群发生故障转移，会将最新的信息推送给Redis客户端
+
+服务状态监控：Sentinel基于心跳机制检测服务状态，每隔1s向集群的每个实例发送ping命令：
+    主关下线：如果某Sentinel节点发现某实例未在规定时间响应，则认为该实例下线
+    客观下线：若超过指定数量（quorum）的Sentinel都认为该实例主观下线，则该实例客观下线。quorum值最好超过Sentinel实例数量的一半
+
+选举新的master：
+    一旦发现master故障，Sentinel需要在slave中选择一个作为新的master，选择依据如下：
+        1、首先判断slave节点与master节点断开时间长短，如果超过指定值（down-after-milliseconds * 10）则会排除该slave节点
+        2、然后判断slave节点的slave-priority值，越小优先级越高，如果是0则永不参加选举
+        3、如果slave-priority一样，则判断slave的offset值，越大数据越新，优先级越高
+        4、最后判断slave节点运行id，越小优先级越高
+
+    如何实现故障转移：
+        选择一个slave为新的master后，故障转移步骤如下
+        1、Sentinel给备选的slave1节点发送slaveof no one命令，让该节点成为master
+        2、Sentinel给所有其他slave发送slaveof 192.168.138.127 7002命令，让这些slave成为新的master的从节点，开始新的master上数据同步
+        3、最后Sentinel将故障节点标记为slave，当故障节点恢复后会自动成为新的master的slave节点
+    
+创建哨兵集群：
+    1、在/tmp目录下创建3个Sentinel文件夹s1，s2，s3
+    2、在s1目录下创建一个sentinel.conf文件，添加如下内容
+        port 27001
+        sentinel announce-ip 192.168.137.128 //声明ip地址
+        sentinel monitor mymaster 192.168.137.128 7001 2 // 声明主节点地址，2是quorum值数量
+        sentinel down-after-milliseconds mymaster 5000 // 断开最长超时时间
+        sentinel failover-timeout mymaster 60000 // 故障恢复最长时间
+        dir "/tmp/s1" // 工作目录
+    
+        拷贝到s2，s3：
+            echo s2 s3 | xargs -t -n 1 cp s1/sentinel.conf
+    3、启动sentinel实例
+        redis-server s1/sentinel.conf --sentinel
+        redis-server s2/sentinel.conf --sentinel
+        redis-server s3/sentinel.conf --sentinel
+
+    测试：
+        redis-cli -p 7001 shutdown（redis-cli -p 27001 shutdown，关闭sencinel节点一样的）
+        redis-cli -p 27001 sentinel sentinels查看集群是否建立成功

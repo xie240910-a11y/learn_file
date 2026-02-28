@@ -38,3 +38,144 @@ go程序热加载：
     air用的比较多
     go install github.com/air-verse/air@latest
     对应项目下调用：air 
+
+创建一个api文件：
+    goctl api -o shop.api
+
+
+go-zero内置sqlx使用：
+    注意，需要在model/mysql文件夹下新增sql文件，需要有表的结构sql
+    goctl model mysql ddl --src focus.sql --dir .
+
+
+go-zero中的gorm：
+    安装依赖
+    go get -u gorm.io/gorm
+    go get -u gorm.io/driver/mysql
+    go mod tidy
+
+    获取数据：l.svcCtx.DB.Where("id=?", id).Find(&focus).Error
+    更新数据：
+        l.svcCtx.DB.Where("id=?", id).Update(&focus).Error
+        或者
+        如果批量想修改建议：
+        focus := gorm.Focus{
+            Title:"111"
+        }
+        l.svcCtx.DB.Save(&focus);
+        
+    删除数据：
+        focus := gorm.Focus{
+            Id:req.Id;
+        }
+        l.svcCtx.DB.Delete(&focus);
+    新增数据：
+        focus := gorm.Focus{
+            Title:"111",
+            Pic:"22",
+            Link:"333",
+            Position:44
+        }
+        l.svcCtx.DB.Create(&focus)
+
+    高级sql语句：
+
+        article := []gorm.Article{}
+
+        查询大于10 的数据
+        err = l.svcCtx.Db.Where("id>?", 10).Find(&article).Error
+
+        多条件查询，大于10小于15
+        err = l.svcCtx.Db.Where("id>? and id < ?", 10, 15).Find(&article).Error
+        
+        IN查询
+        err = l.svcCtx.Db.Where("id IN (?,?,?)", 10, 15, 20).Find(&article).Error
+
+        LIKE查询
+        err = l.svcCtx.Db.Where("title LIKE ?", "%插件%").Find(&article).Error
+            如果查询关键词是英文，先定义再查询
+            word := "flutter"
+            err = l.svcCtx.Db.Where("title LIKE ?", "%" + word +"%").Find(&article).Error
+        
+        BETWEEN 查询
+        err = l.svcCtx.Db.Where("id BETWEEN ? AND ?", 10, 15).Find(&article).Error
+
+        Or 查询
+        err = l.svcCtx.Db.Where("id=? OR id=?", 10, 15).Find(&article).Error
+        或者
+        err = l.svcCtx.Db.Where("id=?", 10).Or("id=?", 15).Find(&article).Error
+
+        排序
+        err = l.svcCtx.Db.Order("id DESC").Find(&article).Error
+        err = l.svcCtx.Db.Order("id DESC").Order("title DESC").Find(&article).Error
+
+        Limit, Offset, 分页
+        l.svcCtx.Db.Limit(10).Find(&article).Error
+        l.svcCtx.Db.Offset(10).Find(&article).Error
+
+        Count获取总数
+        var count int64
+        l.svcCtx.Db.Find(&article).Count(&count).Error
+
+        Distinct去重
+        l.svcCtx.Db.Distinct("title").Find(&article).Error
+
+        Select选择字段返回
+        l.svcCtx.Db.Select("title").Find(&article).Error
+
+        在model\gorm文件的接口体定义中，可以添加 omitempty让参数可为空，具体可以gpt搜索
+    
+    执行原生sql：
+        增删改：
+            result := l.svcCtx.Db.Exec("delete from article where id = ?", 1)
+        
+        查询：
+            article := []gorm.Article{}
+            result := l.svcCtx.Db.Raw("select * from article", 1).Scan(&article)
+
+    关联查询：
+        一对一：l.svcCtx.Db.Preload("ArticleCate", 1).Find(&article) // 注意：表与表之间字段名称需要存在关联
+        一对多：需要通过foreignkey指定当前表外键，references指定关联表中和外界关联的字段
+        在结构体中定义：
+            type ArticleCate struct{
+                Id int `json:"id"`
+                Title int `json:"title"`
+                Status int `json:"status"`
+                Article []Article `json:"article" gorm:"foreignKey:CateId;references:Id"` // CateId对应另一个结构体的字段，不是数据库的字段
+            }
+        多对多
+            type ArticleCate struct{
+                Id int `json:"id"`
+                Title int `json:"title"`
+                Status int `json:"status"`
+                Article []Article `json:"article" gorm:"many2many:lesson_student;"` //多对多，关联中间表
+            }
+        
+        统一错误处理：
+            在调用代码中添加：
+                https.SetErrorHandler(func(err error) (int, any) {
+                    switch e := err.(type) {
+                    case *errors.CodeMsg:
+                        return http.StatusOK, type.CommonResponse{
+                            Success: false, 
+                            Code: e.code,
+                            Message:e.Msg,
+                        }
+                    default:
+                        return http.StatusOK, type.CommonResponse{
+                            Success: false, 
+                            Code: 500,
+                            Message:e.Error(),
+                        }
+                    }
+
+                })
+
+        封装统一处理函数：
+            在internal/biz下新建error.go, code.go,response.go
+
+    使用结构体存在json，如果需要参数 使用json格式，需要在头文件标注json：Content-Type: application/json
+
+    添加jwt权限验证：
+    // 在handler文件下，router.go文件的路由中添加该代码
+    rest.WithJwt(serverCtx.Config.Auth.Secret),
